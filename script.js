@@ -27,7 +27,7 @@ function drawBlock(x,y,group,text,size){
     ctx.fillText(text,x+(size/4),y+(size/1.2))
 }
 
-drawBlock(100,100,"control","yodzho",16)
+drawBlock(100,100,"control","megani",30)
 
 
 
