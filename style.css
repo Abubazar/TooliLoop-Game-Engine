@@ -1,3 +1,94 @@
-#blocks{
-    background-color: rgb(210, 210, 210);
+body{
+    background-color: rgb(232, 232, 232);
+    font-family: monospace;
+}
+
+.Block{
+    color: white;
+    display: flex;
+    gap: 4px;
+    max-width: fit-content;
+    align-items: center;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.Block input{
+    border-radius: 300px;
+    border: solid 2px rgb(255, 255, 255);
+    width: 30px;
+}
+
+.control{
+    background-color: #ff8400ff;
+    border: solid 2px #dd7200ff;
+}
+.control input{
+    background-color: #fde5cb;
+}
+
+.event{
+    background-color: #e8e000ff;
+    border: solid 2px #bfb901ff;
+}
+.event input{
+    background-color: rgb(255, 252, 174);
+}
+
+.motion{
+    background-color:#006affff;
+    border: solid 2px #0057d0ff;
+}
+.motion input{
+    background-color: rgb(190, 217, 255);
+}
+
+.looks{
+    background-color: #ff0062ff;
+    border: solid 2px #bd0048ff;
+}
+.looks input{
+    background-color: rgb(254, 189, 214);
+}
+
+.sound{
+    background-color: #bb00ffff;
+    border: solid 2px #a400e0ff;
+}
+.sound input{
+    background-color: rgb(239, 194, 255);
+}
+
+.input{
+    background-color: #00ff84ff;
+    border: solid 2px #00dc71ff;
+}
+.input input{
+    background-color: rgb(201, 255, 229);
+}
+
+.operator{
+    background-color: #71fc00ff;
+    border: solid 2px #63db00ff;
+    border-radius: 300px;
+}
+.operator input{
+    background-color: rgb(218, 255, 188);
+}
+
+.variable{
+    background-color: #f1551cff;
+    border: solid 2px #d93a00ff;
+    border-radius: 300px;
+}
+.variable input{
+    background-color: rgb(255, 197, 176);
+}
+
+.function{
+    background-color: #d02121ff;
+    border: solid 2px #b61717ff;
+}
+.function input{
+    background-color: rgb(246, 178, 178);
 }

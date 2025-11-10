@@ -1,176 +1,312 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Line-Based Block Editor</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DOM Drag & Drop + Input Highlight</title>
 <style>
-  body {
-    margin: 0;
-    display: flex;
-    height: 100vh;
-    font-family: monospace;
-    background: #202020;
-    color: white;
+  :root{
+    --drop-bg: #f5f7fa;
+    --drop-border: #d0d7e6;
+    --drag-over-bg: #e0fff0;    /* dropzone highlight when dragged over */
+    --drag-over-border: #3bbf88;
+    --item-bg: #ffffff;
+    --item-border: #cfd8e3;
+    --focus-color: #4a90e2;     /* default input focus color */
+    --selection-bg: #ffea00;    /* default text-selection color inside inputs */
+    --selection-color: #000;
   }
-  #menu {
-    width: 180px;
-    background: #2d2d2d;
-    border-right: 2px solid #444;
-    padding: 10px;
+
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    padding: 20px;
+    background: #f2f4f8;
+    color: #111;
   }
-  #menu div {
-    margin: 8px 0;
-    padding: 6px;
-    text-align: center;
-    border-radius: 8px;
-    cursor: grab;
+
+  .container {
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
   }
-  canvas {
-    flex: 1;
-    display: block;
-    background: #1a1a1a;
+
+  .pane {
+    width:300px;
+    background:var(--drop-bg);
+    border:1px solid var(--drop-border);
+    border-radius:10px;
+    padding:12px;
+    box-shadow: 0 2px 6px rgba(16,24,40,0.04);
   }
+
+  h3 { margin:6px 0 12px; font-size:14px; }
+
+  .list {
+    min-height:160px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:8px;
+    border-radius:8px;
+  }
+
+  .item {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    background:var(--item-bg);
+    border:1px solid var(--item-border);
+    border-radius:8px;
+    cursor:grab;
+    user-select:none;
+  }
+  .item:active { cursor:grabbing; }
+
+  .placeholder {
+    padding:14px;
+    text-align:center;
+    color:#6b7280;
+    border-radius:6px;
+    font-size:13px;
+  }
+
+  /* Highlight a dropzone when dragged over */
+  .dropzone.drag-over {
+    background: var(--drag-over-bg);
+    border-color: var(--drag-over-border);
+    box-shadow: 0 4px 18px rgba(59,191,136,0.12);
+  }
+
+  /* Input focus styling: change outline (the highlight) */
+  input[type="text"]{
+    width:100%;
+    padding:8px 10px;
+    border-radius:6px;
+    border:1px solid #cbd5e1;
+    font-size:14px;
+    outline: none;
+    transition: box-shadow .15s, border-color .15s;
+  }
+
+  /* THE FOCUS RING — control this to change the "highlight" when input selected */
+  input[type="text"]:focus{
+    border-color: var(--focus-color);
+    box-shadow: 0 0 0 4px rgba(74,144,226,0.12); /* soft glow */
+  }
+
+  /* Text selection inside inputs: change the color and background of selected text */
+  input::selection { /* for browsers that apply ::selection inside inputs */
+    background: var(--selection-bg);
+    color: var(--selection-color);
+  }
+
+  /* Small helper button */
+  .controls { margin-top:10px; display:flex; gap:6px; }
+  button{ padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; background:white; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<div id="menu">
-  <div draggable="true" data-group="control">Repeat</div>
-  <div draggable="true" data-group="event">When Clicked</div>
-  <div draggable="true" data-group="motion">Move 10 Steps</div>
-  <div draggable="true" data-group="looks">Say Hello</div>
-  <div draggable="true" data-group="input">Ask</div>
-  <div draggable="true" data-group="operator">+ Operator</div>
+<h2>Native DOM Drag & Drop (no libs)</h2>
+<p>Drag items between the two boxes. There is also an input whose highlight color can be changed below.</p>
+
+<div class="container">
+  <div class="pane">
+    <h3>Available Items</h3>
+    <div class="list dropzone" id="source">
+      <div class="item" draggable="true" data-id="1">🟦 Item 1</div>
+      <div class="item" draggable="true" data-id="2">🟩 Item 2</div>
+      <div class="item" draggable="true" data-id="3">🟨 Item 3</div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <h3>Selected Items</h3>
+    <div class="list dropzone" id="target">
+      <div class="placeholder">Drop items here</div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label for="highlightColor">Set input highlight (focus) color:</label>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+        <input id="highlightColor" type="color" value="#4a90e2" title="Choose color">
+        <button id="applyFocus">Apply</button>
+        <button id="reset">Reset</button>
+      </div>
+
+      <div style="margin-top:8px;">
+        <input id="sampleInput" type="text" placeholder="Click here to see the highlight" />
+      </div>
+
+      <div class="controls">
+        <label style="display:flex; gap:6px; align-items:center;">
+          <input id="toggleSelectionStyle" type="checkbox" /> custom selection color
+        </label>
+      </div>
+    </div>
+  </div>
 </div>
 
-<canvas id="blocks" width="800" height="600"></canvas>
-
 <script>
-const canvas = document.getElementById("blocks");
-const ctx = canvas.getContext("2d");
+  // DRAG & DROP logic (native DOM)
+  // - draggable items have draggable="true"
+  // - on dragstart we set the dataTransfer payload
+  // - dropzones handle dragover (preventDefault) and drop
+  // - visual feedback via a "drag-over" class on dropzone
 
-const blockGroups = {
-  control: ['#ff8400ff','#dd7200ff'],
-  event: ['#e8e000ff','#bfb901ff'],
-  motion: ['#006affff','#0057d0ff'],
-  looks: ['#ff0062ff','#bd0048ff'],
-  sound: ['#bb00ffff','#a400e0ff'],
-  input: ['#00ff84ff','#00dc71ff'],
-  operator: ['#71fc00ff','#63db00ff'],
-  variable: ['#f1551cff','#d93a00ff'],
-  function: ['#d02121ff','#b61717ff'],
-};
+  const lists = document.querySelectorAll('.dropzone');
+  let draggedEl = null;
 
-function drawBlock(x, y, group, text, size) {
-  ctx.font = size + "px monospace";
-  const txtWidth = ctx.measureText(text).width;
-  ctx.beginPath();
-  ctx.roundRect(x, y, txtWidth + size/2, size + size/4, size/4);
-  ctx.fillStyle = blockGroups[group][0];
-  ctx.fill();
-  ctx.lineWidth = size/10;
-  ctx.strokeStyle = blockGroups[group][1];
-  ctx.stroke();
-  ctx.fillStyle = "white";
-  ctx.fillText(text, x + size/4, y + size/1.2);
-}
+  // Add dragstart/dragend to items
+  function makeDraggable(item){
+    item.addEventListener('dragstart', (e) => {
+      draggedEl = item;
+      e.dataTransfer.setData('text/plain', item.dataset.id || item.textContent);
+      // Use effectAllowed/cursor
+      e.dataTransfer.effectAllowed = 'move';
+      // small hack to make the dragged element look inert in some browsers:
+      item.classList.add('dragging');
+    });
 
-class CodeBlock {
-  constructor(x, y, group, text, size = 16) {
-    this.x = x;
-    this.y = y;
-    this.group = group;
-    this.text = text;
-    this.size = size;
-    ctx.font = size + "px monospace";
-    this.width = ctx.measureText(text).width + size/2;
-    this.height = size + size/4;
+    item.addEventListener('dragend', (e) => {
+      draggedEl = null;
+      item.classList.remove('dragging');
+    });
   }
 
-  draw() {
-    drawBlock(this.x, this.y, this.group, this.text, this.size);
-  }
+  document.querySelectorAll('.item').forEach(makeDraggable);
 
-  isInside(mx, my) {
-    return mx > this.x && mx < this.x + this.width &&
-           my > this.y && my < this.y + this.height;
-  }
-}
+  // Dropzone handlers
+  lists.forEach(list => {
+    list.addEventListener('dragover', (e) => {
+      e.preventDefault(); // MUST to allow drop
+      e.dataTransfer.dropEffect = 'move';
+      list.classList.add('drag-over');
+    });
 
-const lineHeight = 50; // vertical slot height
-const blocks = [];
-let draggingBlock = null;
-let offsetX = 0;
-let offsetY = 0;
+    list.addEventListener('dragleave', (e) => {
+      // only remove when leaving the list
+      if (!list.contains(e.relatedTarget)) list.classList.remove('drag-over');
+    });
 
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let b of blocks) b.draw();
-}
+    list.addEventListener('drop', (e) => {
+      e.preventDefault();
+      list.classList.remove('drag-over');
 
-// ------------------ Toolbox Drag ------------------
-const menuItems = document.querySelectorAll('#menu div');
-menuItems.forEach(item => {
-  item.addEventListener('dragstart', e => {
-    e.dataTransfer.setData('group', item.dataset.group);
-    e.dataTransfer.setData('text', item.innerText);
+      // If there's a placeholder, remove it on first drop
+      const placeholder = list.querySelector('.placeholder');
+      if (placeholder) placeholder.remove();
+
+      // Move the dragged element into the new list
+      if (draggedEl) {
+        list.appendChild(draggedEl);
+      } else {
+        // fallback: try to create an item from dataTransfer
+        const text = e.dataTransfer.getData('text/plain');
+        if (text) {
+          const newItem = document.createElement('div');
+          newItem.className = 'item';
+          newItem.draggable = true;
+          newItem.textContent = text;
+          newItem.dataset.id = text;
+          makeDraggable(newItem);
+          list.appendChild(newItem);
+        }
+      }
+    });
   });
-});
 
-// ------------------ Canvas Drop ------------------
-canvas.addEventListener('dragover', e => e.preventDefault());
-canvas.addEventListener('drop', e => {
-  e.preventDefault();
-  const group = e.dataTransfer.getData('group');
-  const text = e.dataTransfer.getData('text');
-  const rect = canvas.getBoundingClientRect();
-  let x = e.clientX - rect.left;
-  let y = e.clientY - rect.top;
-
-  // Snap y to nearest line
-  y = Math.floor(y / lineHeight) * lineHeight;
-
-  // Only one block per line
-  if (!blocks.some(b => b.y === y)) {
-    blocks.push(new CodeBlock(x, y, group, text));
-    redraw();
-  }
-});
-
-// ------------------ Canvas Drag ------------------
-canvas.addEventListener('mousedown', e => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  // Check from topmost to bottom
-  for (let b of blocks.slice().reverse()) {
-    if (b.isInside(mx, my)) {
-      draggingBlock = b;
-      offsetX = mx - b.x;
-      offsetY = my - b.y;
-      break;
+  // Simple keyboard-accessible reordering: allow Enter on focused items to move them to the other pane
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const active = document.activeElement;
+      if (active && active.classList.contains('item')) {
+        // find the other dropzone
+        const parent = active.closest('.dropzone');
+        const other = Array.from(document.querySelectorAll('.dropzone')).find(z => z !== parent);
+        if (other) {
+          // remove placeholder if present
+          const ph = other.querySelector('.placeholder');
+          if (ph) ph.remove();
+          other.appendChild(active);
+          active.focus();
+        }
+      }
     }
+  });
+
+  // Make items focusable for keyboard support
+  document.querySelectorAll('.item').forEach(it => {
+    it.tabIndex = 0;
+  });
+
+  // -------------------------
+  // INPUT highlight customization
+  // -------------------------
+  const colorPicker = document.getElementById('highlightColor');
+  const applyBtn = document.getElementById('applyFocus');
+  const resetBtn = document.getElementById('reset');
+  const sampleInput = document.getElementById('sampleInput');
+  const toggleSelection = document.getElementById('toggleSelectionStyle');
+
+  const rootStyle = document.documentElement.style;
+  const defaultFocus = getComputedStyle(document.documentElement).getPropertyValue('--focus-color').trim() || '#4a90e2';
+
+  applyBtn.addEventListener('click', () => {
+    // Change the CSS variable used for input focus ring
+    rootStyle.setProperty('--focus-color', colorPicker.value);
+    // Also update the box-shadow alpha color (we rely on var for border-color;
+    // the box-shadow remains using border and alpha from the CSS).
+    sampleInput.focus();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    rootStyle.setProperty('--focus-color', defaultFocus);
+    colorPicker.value = defaultFocus || '#4a90e2';
+  });
+
+  // Toggle text selection styling inside inputs
+  toggleSelection.addEventListener('change', (e) => {
+    if (toggleSelection.checked) {
+      // apply custom selection colors
+      rootStyle.setProperty('--selection-bg', '#ffea00');
+      rootStyle.setProperty('--selection-color', '#111');
+    } else {
+      // fallback to defaults (transparent/no custom selection)
+      rootStyle.setProperty('--selection-bg', '#b3d4ff');
+      rootStyle.setProperty('--selection-color', '#000');
+    }
+    sampleInput.focus();
+  });
+
+  // Optionally: change focus style dynamically on focus events (example)
+  sampleInput.addEventListener('focus', () => {
+    // You could animate or temporarily change the focus color here:
+    // rootStyle.setProperty('--focus-color', '#ef5b5b');
+  });
+
+  // If user drops an item back into source and it becomes empty, show placeholder again
+  function ensurePlaceholders() {
+    document.querySelectorAll('.dropzone').forEach(zone => {
+      if (zone.querySelectorAll('.item').length === 0) {
+        if (!zone.querySelector('.placeholder')) {
+          const ph = document.createElement('div');
+          ph.className = 'placeholder';
+          ph.textContent = 'Drop items here';
+          zone.appendChild(ph);
+        }
+      } else {
+        const ph = zone.querySelector('.placeholder');
+        if (ph) ph.remove();
+      }
+    });
   }
-});
 
-canvas.addEventListener('mousemove', e => {
-  if (!draggingBlock) return;
-  const rect = canvas.getBoundingClientRect();
-  draggingBlock.x = e.clientX - rect.left - offsetX;
+  // run periodically or after certain actions
+  setInterval(ensurePlaceholders, 800);
 
-  // Snap y to nearest line
-  draggingBlock.y = Math.round((e.clientY - rect.top - offsetY) / lineHeight) * lineHeight;
-
-  redraw();
-});
-
-canvas.addEventListener('mouseup', () => {
-  draggingBlock = null;
-});
-
-redraw();
+  // If new items are created dynamically, call makeDraggable(newItem) and set tabIndex=0
 </script>
 </body>
 </html>
