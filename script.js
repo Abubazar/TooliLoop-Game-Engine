@@ -13,7 +13,7 @@ function addBlock(content,code,type,input=null){
     blockList.appendChild(codeBlock)
     
     if (input==null){}
-    else{ console.log(999)
+    else{ console.log(input)
         const inputField = document.createElement('input')
         if(input=='text'){
             inputField.type='text'

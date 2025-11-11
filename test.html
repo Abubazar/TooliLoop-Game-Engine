@@ -1,312 +1,132 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DOM Drag & Drop + Input Highlight</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini CodePen with Error Highlighting</title>
+
+<!-- CodeMirror core -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
+
+<!-- CodeMirror modes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/javascript/javascript.min.js"></script>
+
+<!-- Linting addons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/lint.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/javascript-lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/css-lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/html-lint.min.js"></script>
+
+<!-- Linting libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.13.6/jshint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/csslint/1.0.5/csslint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/htmlhint/0.15.3/htmlhint.min.js"></script>
+
 <style>
-  :root{
-    --drop-bg: #f5f7fa;
-    --drop-border: #d0d7e6;
-    --drag-over-bg: #e0fff0;    /* dropzone highlight when dragged over */
-    --drag-over-border: #3bbf88;
-    --item-bg: #ffffff;
-    --item-border: #cfd8e3;
-    --focus-color: #4a90e2;     /* default input focus color */
-    --selection-bg: #ffea00;    /* default text-selection color inside inputs */
-    --selection-color: #000;
+  body {
+    background: #1e1e1e;
+    color: #fff;
+    font-family: monospace;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
   }
-
-  body{
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    padding: 20px;
-    background: #f2f4f8;
-    color: #111;
+  .tabs {
+    display: flex;
+    background: #2d2d2d;
   }
-
-  .container {
-    display:flex;
-    gap:20px;
-    align-items:flex-start;
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
   }
-
-  .pane {
-    width:300px;
-    background:var(--drop-bg);
-    border:1px solid var(--drop-border);
-    border-radius:10px;
-    padding:12px;
-    box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+  .tab.active {
+    border-bottom: 3px solid #007acc;
+    background: #1f1f1f;
   }
-
-  h3 { margin:6px 0 12px; font-size:14px; }
-
-  .list {
-    min-height:160px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    padding:8px;
-    border-radius:8px;
+  .editor {
+    display: none;
   }
-
-  .item {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:10px 12px;
-    background:var(--item-bg);
-    border:1px solid var(--item-border);
-    border-radius:8px;
-    cursor:grab;
-    user-select:none;
+  .editor.active {
+    display: block;
   }
-  .item:active { cursor:grabbing; }
-
-  .placeholder {
-    padding:14px;
-    text-align:center;
-    color:#6b7280;
-    border-radius:6px;
-    font-size:13px;
+  .CodeMirror {
+    height: calc(100vh - 160px);
+    font-size: 14px;
   }
-
-  /* Highlight a dropzone when dragged over */
-  .dropzone.drag-over {
-    background: var(--drag-over-bg);
-    border-color: var(--drag-over-border);
-    box-shadow: 0 4px 18px rgba(59,191,136,0.12);
+  #runBtn {
+    background: #007acc;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 10px;
+    align-self: flex-end;
   }
-
-  /* Input focus styling: change outline (the highlight) */
-  input[type="text"]{
-    width:100%;
-    padding:8px 10px;
-    border-radius:6px;
-    border:1px solid #cbd5e1;
-    font-size:14px;
-    outline: none;
-    transition: box-shadow .15s, border-color .15s;
+  #output {
+    flex: 1;
+    background: white;
+    border: none;
+    width: 100%;
   }
-
-  /* THE FOCUS RING — control this to change the "highlight" when input selected */
-  input[type="text"]:focus{
-    border-color: var(--focus-color);
-    box-shadow: 0 0 0 4px rgba(74,144,226,0.12); /* soft glow */
-  }
-
-  /* Text selection inside inputs: change the color and background of selected text */
-  input::selection { /* for browsers that apply ::selection inside inputs */
-    background: var(--selection-bg);
-    color: var(--selection-color);
-  }
-
-  /* Small helper button */
-  .controls { margin-top:10px; display:flex; gap:6px; }
-  button{ padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; background:white; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<h2>Native DOM Drag & Drop (no libs)</h2>
-<p>Drag items between the two boxes. There is also an input whose highlight color can be changed below.</p>
-
-<div class="container">
-  <div class="pane">
-    <h3>Available Items</h3>
-    <div class="list dropzone" id="source">
-      <div class="item" draggable="true" data-id="1">🟦 Item 1</div>
-      <div class="item" draggable="true" data-id="2">🟩 Item 2</div>
-      <div class="item" draggable="true" data-id="3">🟨 Item 3</div>
-    </div>
-  </div>
-
-  <div class="pane">
-    <h3>Selected Items</h3>
-    <div class="list dropzone" id="target">
-      <div class="placeholder">Drop items here</div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <label for="highlightColor">Set input highlight (focus) color:</label>
-      <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-        <input id="highlightColor" type="color" value="#4a90e2" title="Choose color">
-        <button id="applyFocus">Apply</button>
-        <button id="reset">Reset</button>
-      </div>
-
-      <div style="margin-top:8px;">
-        <input id="sampleInput" type="text" placeholder="Click here to see the highlight" />
-      </div>
-
-      <div class="controls">
-        <label style="display:flex; gap:6px; align-items:center;">
-          <input id="toggleSelectionStyle" type="checkbox" /> custom selection color
-        </label>
-      </div>
-    </div>
-  </div>
+<div class="tabs">
+  <div class="tab active" data-target="html">HTML</div>
+  <div class="tab" data-target="css">CSS</div>
+  <div class="tab" data-target="js">JS</div>
 </div>
 
+<div id="html" class="editor active"><textarea id="htmlEditor"><h1>Hello World</h1></textarea></div>
+<div id="css" class="editor"><textarea id="cssEditor">h1 { color: red }</textarea></div>
+<div id="js" class="editor"><textarea id="jsEditor">console.log("Hello JS!")</textarea></div>
+
+<button id="runBtn">Run ▶</button>
+<iframe id="output"></iframe>
+
 <script>
-  // DRAG & DROP logic (native DOM)
-  // - draggable items have draggable="true"
-  // - on dragstart we set the dataTransfer payload
-  // - dropzones handle dragover (preventDefault) and drop
-  // - visual feedback via a "drag-over" class on dropzone
+  // Initialize CodeMirror editors with linting
+  const htmlEditor = CodeMirror.fromTextArea(document.getElementById("htmlEditor"), {
+    mode: "htmlmixed", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
+  });
+  const cssEditor = CodeMirror.fromTextArea(document.getElementById("cssEditor"), {
+    mode: "css", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
+  });
+  const jsEditor = CodeMirror.fromTextArea(document.getElementById("jsEditor"), {
+    mode: "javascript", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
+  });
 
-  const lists = document.querySelectorAll('.dropzone');
-  let draggedEl = null;
-
-  // Add dragstart/dragend to items
-  function makeDraggable(item){
-    item.addEventListener('dragstart', (e) => {
-      draggedEl = item;
-      e.dataTransfer.setData('text/plain', item.dataset.id || item.textContent);
-      // Use effectAllowed/cursor
-      e.dataTransfer.effectAllowed = 'move';
-      // small hack to make the dragged element look inert in some browsers:
-      item.classList.add('dragging');
-    });
-
-    item.addEventListener('dragend', (e) => {
-      draggedEl = null;
-      item.classList.remove('dragging');
-    });
-  }
-
-  document.querySelectorAll('.item').forEach(makeDraggable);
-
-  // Dropzone handlers
-  lists.forEach(list => {
-    list.addEventListener('dragover', (e) => {
-      e.preventDefault(); // MUST to allow drop
-      e.dataTransfer.dropEffect = 'move';
-      list.classList.add('drag-over');
-    });
-
-    list.addEventListener('dragleave', (e) => {
-      // only remove when leaving the list
-      if (!list.contains(e.relatedTarget)) list.classList.remove('drag-over');
-    });
-
-    list.addEventListener('drop', (e) => {
-      e.preventDefault();
-      list.classList.remove('drag-over');
-
-      // If there's a placeholder, remove it on first drop
-      const placeholder = list.querySelector('.placeholder');
-      if (placeholder) placeholder.remove();
-
-      // Move the dragged element into the new list
-      if (draggedEl) {
-        list.appendChild(draggedEl);
-      } else {
-        // fallback: try to create an item from dataTransfer
-        const text = e.dataTransfer.getData('text/plain');
-        if (text) {
-          const newItem = document.createElement('div');
-          newItem.className = 'item';
-          newItem.draggable = true;
-          newItem.textContent = text;
-          newItem.dataset.id = text;
-          makeDraggable(newItem);
-          list.appendChild(newItem);
-        }
-      }
+  // Tab switching
+  const tabs = document.querySelectorAll('.tab');
+  const editors = document.querySelectorAll('.editor');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      editors.forEach(e => e.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.target).classList.add('active');
     });
   });
 
-  // Simple keyboard-accessible reordering: allow Enter on focused items to move them to the other pane
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      const active = document.activeElement;
-      if (active && active.classList.contains('item')) {
-        // find the other dropzone
-        const parent = active.closest('.dropzone');
-        const other = Array.from(document.querySelectorAll('.dropzone')).find(z => z !== parent);
-        if (other) {
-          // remove placeholder if present
-          const ph = other.querySelector('.placeholder');
-          if (ph) ph.remove();
-          other.appendChild(active);
-          active.focus();
-        }
-      }
-    }
+  // Run preview
+  document.getElementById("runBtn").addEventListener("click", () => {
+    const html = htmlEditor.getValue();
+    const css = `<style>${cssEditor.getValue()}</style>`;
+    const js = `<script>${jsEditor.getValue()}<\/script>`;
+    const iframe = document.getElementById("output");
+    iframe.srcdoc = html + css + js;
   });
-
-  // Make items focusable for keyboard support
-  document.querySelectorAll('.item').forEach(it => {
-    it.tabIndex = 0;
-  });
-
-  // -------------------------
-  // INPUT highlight customization
-  // -------------------------
-  const colorPicker = document.getElementById('highlightColor');
-  const applyBtn = document.getElementById('applyFocus');
-  const resetBtn = document.getElementById('reset');
-  const sampleInput = document.getElementById('sampleInput');
-  const toggleSelection = document.getElementById('toggleSelectionStyle');
-
-  const rootStyle = document.documentElement.style;
-  const defaultFocus = getComputedStyle(document.documentElement).getPropertyValue('--focus-color').trim() || '#4a90e2';
-
-  applyBtn.addEventListener('click', () => {
-    // Change the CSS variable used for input focus ring
-    rootStyle.setProperty('--focus-color', colorPicker.value);
-    // Also update the box-shadow alpha color (we rely on var for border-color;
-    // the box-shadow remains using border and alpha from the CSS).
-    sampleInput.focus();
-  });
-
-  resetBtn.addEventListener('click', () => {
-    rootStyle.setProperty('--focus-color', defaultFocus);
-    colorPicker.value = defaultFocus || '#4a90e2';
-  });
-
-  // Toggle text selection styling inside inputs
-  toggleSelection.addEventListener('change', (e) => {
-    if (toggleSelection.checked) {
-      // apply custom selection colors
-      rootStyle.setProperty('--selection-bg', '#ffea00');
-      rootStyle.setProperty('--selection-color', '#111');
-    } else {
-      // fallback to defaults (transparent/no custom selection)
-      rootStyle.setProperty('--selection-bg', '#b3d4ff');
-      rootStyle.setProperty('--selection-color', '#000');
-    }
-    sampleInput.focus();
-  });
-
-  // Optionally: change focus style dynamically on focus events (example)
-  sampleInput.addEventListener('focus', () => {
-    // You could animate or temporarily change the focus color here:
-    // rootStyle.setProperty('--focus-color', '#ef5b5b');
-  });
-
-  // If user drops an item back into source and it becomes empty, show placeholder again
-  function ensurePlaceholders() {
-    document.querySelectorAll('.dropzone').forEach(zone => {
-      if (zone.querySelectorAll('.item').length === 0) {
-        if (!zone.querySelector('.placeholder')) {
-          const ph = document.createElement('div');
-          ph.className = 'placeholder';
-          ph.textContent = 'Drop items here';
-          zone.appendChild(ph);
-        }
-      } else {
-        const ph = zone.querySelector('.placeholder');
-        if (ph) ph.remove();
-      }
-    });
-  }
-
-  // run periodically or after certain actions
-  setInterval(ensurePlaceholders, 800);
-
-  // If new items are created dynamically, call makeDraggable(newItem) and set tabIndex=0
 </script>
+
 </body>
 </html>
