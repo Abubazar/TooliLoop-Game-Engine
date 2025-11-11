@@ -19,6 +19,20 @@ body{
     height: 100%;
 }
 
+#codeView{
+    padding: 0;
+    margin: 0;
+}
+#codeArea{
+    border: none;
+    resize: none;
+    width: 500px;
+}
+#codeArea:focus{
+    outline: none;
+}
+
+
 #type-selection{
     display: flex;
     flex-direction: column;
@@ -70,7 +84,7 @@ body{
     text-align: center;
 }
 
-.Block input:focus { border-color: red; }
+.Block input:focus { outline: rgb(49, 49, 49); }
 
 .control{
     background-color: #ff8400ff;
