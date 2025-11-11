@@ -31,6 +31,33 @@ function UpDrawImg(img, x, y, deg = 0, op = 1, flipX = 1, flipY = 1, width, heig
 const tooli = new Image()
 tooli.src = "tuli.png"
 
-tooli.onload = () => {
-    UpDrawImg(tooli, 90, 90, 0, 1, 1, 1, 70, 70);
-};
+
+
+const FPS = 60
+const timestep = 1000/FPS
+let lastTime = 0
+
+let coco = 0
+function update(delta){
+    coco+=delta*900
+}
+
+function render(){
+    ctx.fillStyle="white"
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    UpDrawImg(tooli, 90, 90, coco, 1, 1, 1, 70, 70);
+}
+
+function gameLoop(currentTime) {
+  const deltaTime = (currentTime - lastTime) / 1000
+
+  if (currentTime - lastTime >= timestep) {
+    update(deltaTime)
+    render();
+    lastTime = currentTime
+  }
+
+  requestAnimationFrame(gameLoop)
+}
+requestAnimationFrame(gameLoop)
