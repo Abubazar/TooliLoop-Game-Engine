@@ -3,129 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini CodePen with Error Highlighting</title>
-
-<!-- CodeMirror core -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
-
-<!-- CodeMirror modes -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/htmlmixed/htmlmixed.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/css/css.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/javascript/javascript.min.js"></script>
-
-<!-- Linting addons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/lint.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/lint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/javascript-lint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/css-lint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/addon/lint/html-lint.min.js"></script>
-
-<!-- Linting libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.13.6/jshint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/csslint/1.0.5/csslint.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/htmlhint/0.15.3/htmlhint.min.js"></script>
-
+<title>Drag and Drop Code</title>
 <style>
   body {
-    background: #1e1e1e;
-    color: #fff;
-    font-family: monospace;
-    margin: 0;
+    font-family: Arial, sans-serif;
     display: flex;
-    flex-direction: column;
-    height: 100vh;
+    gap: 20px;
+    padding: 20px;
   }
-  .tabs {
-    display: flex;
-    background: #2d2d2d;
+  .blocks {
+    width: 200px;
   }
-  .tab {
-    flex: 1;
+  .block {
     padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
+    margin-bottom: 10px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    cursor: grab;
   }
-  .tab.active {
-    border-bottom: 3px solid #007acc;
-    background: #1f1f1f;
-  }
-  .editor {
-    display: none;
-  }
-  .editor.active {
-    display: block;
-  }
-  .CodeMirror {
-    height: calc(100vh - 160px);
+  textarea {
+    width: 400px;
+    height: 300px;
+    font-family: monospace;
     font-size: 14px;
-  }
-  #runBtn {
-    background: #007acc;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 10px;
-    align-self: flex-end;
-  }
-  #output {
-    flex: 1;
-    background: white;
-    border: none;
-    width: 100%;
   }
 </style>
 </head>
 <body>
 
-<div class="tabs">
-  <div class="tab active" data-target="html">HTML</div>
-  <div class="tab" data-target="css">CSS</div>
-  <div class="tab" data-target="js">JS</div>
+<div class="blocks">
+  <div class="block" draggable="true" data-code="function hello() {\n    alert('Hello!');\n}">Hello Function</div>
+  <div class="block" draggable="true" data-code="console.log('Debug');">Console Log</div>
+  <div class="block" draggable="true" data-code="for(let i=0;i<10;i++) {\n    console.log(i);\n}">For Loop</div>
 </div>
 
-<div id="html" class="editor active"><textarea id="htmlEditor"><h1>Hello World</h1></textarea></div>
-<div id="css" class="editor"><textarea id="cssEditor">h1 { color: red }</textarea></div>
-<div id="js" class="editor"><textarea id="jsEditor">console.log("Hello JS!")</textarea></div>
-
-<button id="runBtn">Run ▶</button>
-<iframe id="output"></iframe>
+<textarea id="codeArea" placeholder="Drop code here..."></textarea>
 
 <script>
-  // Initialize CodeMirror editors with linting
-  const htmlEditor = CodeMirror.fromTextArea(document.getElementById("htmlEditor"), {
-    mode: "htmlmixed", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
-  });
-  const cssEditor = CodeMirror.fromTextArea(document.getElementById("cssEditor"), {
-    mode: "css", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
-  });
-  const jsEditor = CodeMirror.fromTextArea(document.getElementById("jsEditor"), {
-    mode: "javascript", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
-  });
+const textarea = document.getElementById('codeArea');
+const blocks = document.querySelectorAll('.block');
 
-  // Tab switching
-  const tabs = document.querySelectorAll('.tab');
-  const editors = document.querySelectorAll('.editor');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      editors.forEach(e => e.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById(tab.dataset.target).classList.add('active');
+blocks.forEach(block => {
+    block.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', block.dataset.code);
     });
-  });
+});
 
-  // Run preview
-  document.getElementById("runBtn").addEventListener("click", () => {
-    const html = htmlEditor.getValue();
-    const css = `<style>${cssEditor.getValue()}</style>`;
-    const js = `<script>${jsEditor.getValue()}<\/script>`;
-    const iframe = document.getElementById("output");
-    iframe.srcdoc = html + css + js;
-  });
+textarea.addEventListener('dragover', (e) => {
+    e.preventDefault(); // allow drop
+});
+
+textarea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const code = e.dataTransfer.getData('text/plain');
+
+    // Insert at cursor position
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+
+    textarea.value = text.slice(0, start) + code + text.slice(end);
+    textarea.selectionStart = textarea.selectionEnd = start + code.length;
+    textarea.focus();
+});
 </script>
 
 </body>

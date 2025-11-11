@@ -1,6 +1,11 @@
 
 const blockList = document.getElementById('block-list')
 
+const jsEditor = CodeMirror.fromTextArea(document.getElementById("codeArea"), {
+    mode: "javascript", lineNumbers: true, gutters: ["CodeMirror-lint-markers"], lint: true
+});
+jsEditor.setSize(500, "100%")
+
 function addBlock(content,code,type,input=null){
     const codeBlock = document.createElement('div')
     codeBlock.draggable=true

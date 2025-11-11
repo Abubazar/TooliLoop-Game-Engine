@@ -27,11 +27,11 @@ body{
     border: none;
     resize: none;
     width: 500px;
+    height: 100%;
 }
 #codeArea:focus{
     outline: none;
 }
-
 
 #type-selection{
     display: flex;
