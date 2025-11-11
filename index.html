@@ -9,17 +9,34 @@
 </head>
 <body>
 
-    <div id="block-list">
-        
-    </div>
+    <div class="main-section">
+        <div id="type-selection">
+            <button id="eventbtn" onclick="changeBlockType('event')"><div></div>Event</button>
+            <button id="controlbtn" onclick="changeBlockType('control')"><div></div>Control</button>
+            <button id="motionbtn" onclick="changeBlockType('motion')"><div></div>Motion</button>
+            <button id="looksbtn" onclick="changeBlockType('looks')"><div></div>Looks</button>
+            <button id="soundbtn" onclick="changeBlockType('sound')"><div></div>Sound</button>
+            <button id="inputbtn" onclick="changeBlockType('input')"><div></div>Input</button>
+            <button id="operatebtn" onclick="changeBlockType('operate')"><div></div>Operation</button>
+            <button id="variablebtn" onclick="changeBlockType('variable')"><div></div>Variable</button>
+            <button id="functionbtn" onclick="changeBlockType('function')"><div></div>Function</button>
 
-    <div class="viewer">
+        </div>
+        <div id="block-list">
+            
+        </div>
 
-    </div>
-    
-    <div class="sprites">
+        <div>
+            <div class="viewer">
 
-    </div>
+            </div>
+            
+            <div class="sprites">
+
+            </div>
+        </div>
+
+        </div>
 
 </body>
 <script src="script.js" defer></script>

@@ -1,6 +1,52 @@
 body{
-    background-color: rgb(232, 232, 232);
+    background-color: #e8e8e8;
     font-family: monospace;
+}
+
+.main-section{
+    display: flex;
+    flex-direction: row;
+}
+
+#block-list{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 10px;
+    overflow-y: scroll;
+}
+
+#type-selection{
+    display: flex;
+    flex-direction: column;
+}
+
+#type-selection button{
+    border: 0px;
+    padding: 5px;
+    color: #555555;
+    background-color: #e8e8e800;
+    justify-items: center;
+}
+#type-selection div{
+    width: 25px;
+    height: 25px;
+    border-radius: 300px;
+    border: solid 2px #555555;
+}
+
+#eventbtn div{background-color: #d3cd0b;}
+#controlbtn div{background-color: #ff8400ff;}
+#motionbtn div{background-color: #378aff;}
+#looksbtn div{background-color: #ff0062ff;}
+#soundbtn div{background-color: #bb00ffff;}
+#inputbtn div{background-color: #00ff84ff;}
+#operatebtn div{background-color: #71fc00ff;}
+#variablebtn div{background-color: #f1551cff;}
+#functionbtn div{background-color: #d02121ff;}
+
+#type-selection button:hover{
+    background-color: rgb(202, 202, 202);
 }
 
 .Block{
@@ -15,9 +61,12 @@ body{
 
 .Block input{
     border-radius: 300px;
-    border: solid 2px rgb(255, 255, 255);
+    border: solid 2px #ffffff;
     width: 30px;
+    text-align: center;
 }
+
+.Block input:focus { border-color: red; }
 
 .control{
     background-color: #ff8400ff;
@@ -28,16 +77,16 @@ body{
 }
 
 .event{
-    background-color: #e8e000ff;
+    background-color: #d3cd0b;
     border: solid 2px #bfb901ff;
 }
 .event input{
-    background-color: rgb(255, 252, 174);
+    background-color: rgb(226, 225, 174);
 }
 
 .motion{
-    background-color:#006affff;
-    border: solid 2px #0057d0ff;
+    background-color:#378aff;
+    border: solid 2px #0064f1;
 }
 .motion input{
     background-color: rgb(190, 217, 255);
@@ -67,12 +116,12 @@ body{
     background-color: rgb(201, 255, 229);
 }
 
-.operator{
+.operate{
     background-color: #71fc00ff;
     border: solid 2px #63db00ff;
     border-radius: 300px;
 }
-.operator input{
+.operate input{
     background-color: rgb(218, 255, 188);
 }
 
