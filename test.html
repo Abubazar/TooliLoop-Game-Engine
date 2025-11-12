@@ -1,62 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Drag & Drop DOM Copy</title>
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  .zone { padding: 10px; border: 2px dashed #aaa; width: 200px; min-height: 150px; border-radius: 8px; margin-bottom:20px;}
-  .item { padding: 8px 12px; margin: 6px 0; background: #4a90e2; color: white; border-radius: 6px; cursor: grab; }
-  .dropzone-highlight { background: #e0f7ff; border-color: #00bfff; }
-</style>
+  <style>
+    body { font-family: sans-serif; }
+    .block { 
+      display: inline-block; 
+      padding: 10px; 
+      margin: 5px; 
+      border-radius: 8px; 
+      background: #ddd; 
+      cursor: grab;
+    }
+    .if-block {
+      background: #9ecfff;
+      padding: 10px;
+    }
+    .dropzone {
+      min-height: 30px;
+      min-width: 80px;
+      background: #f3f3f3;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      margin: 5px;
+    }
+    .dropzone.highlight {
+      border-color: #007bff;
+      background: #e0f0ff;
+    }
+  </style>
 </head>
 <body>
+  <h3>Toolbox</h3>
+  <div id="toolbox">
+    <div class="block" draggable="true" data-type="action">Action</div>
+    <div class="block" draggable="true" data-type="condition">Condition</div>
+    <div class="block if-block" draggable="true" data-type="if">If Block</div>
+  </div>
 
-<h2>Drag & Drop Copy Demo</h2>
-<div class="zone" id="source">
-  <div class="item" draggable="true">Item 1</div>
-  <div class="item" draggable="true">Item 2</div>
-  <div class="item" draggable="true">Item 3</div>
-</div>
+  <h3>Workspace</h3>
+  <div id="workspace" class="dropzone"></div>
 
-<div class="zone dropzone" id="target">
-  <p>Drop items here</p>
-</div>
+  <script>
+    let draggedType = null;
 
-<script>
-const sourceItems = document.querySelectorAll('#source .item');
-const target = document.getElementById('target');
+    document.querySelectorAll('.block').forEach(block => {
+      block.addEventListener('dragstart', e => {
+        draggedType = e.target.dataset.type;
+      });
+    });
 
-// For highlighting drop zone
-target.addEventListener('dragover', e => {
-  e.preventDefault();
-  target.classList.add('dropzone-highlight');
-});
+    function setupDropzone(zone) {
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.add('highlight');
+      });
+      zone.addEventListener('dragleave', e => {
+        e.stopPropagation();
+        zone.classList.remove('highlight');
+      });
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('highlight');
+        handleDrop(zone, draggedType);
+      });
+    }
 
-target.addEventListener('dragleave', () => target.classList.remove('dropzone-highlight'));
+    function handleDrop(zone, type) {
+      let newBlock;
 
-// On dragstart, store a reference to the dragged element
-let draggedEl = null;
-sourceItems.forEach(item => {
-  item.addEventListener('dragstart', e => {
-    draggedEl = item; // store actual element
-    e.dataTransfer.setData('text/plain', ''); // required by some browsers
-  });
-});
+      if (type === 'if') {
+        newBlock = document.createElement('div');
+        newBlock.className = 'block if-block';
+        newBlock.innerHTML = `
+          if (<div class="dropzone condition-zone"></div>) {
+            <div class="dropzone body-zone"></div>
+          }
+        `;
+        // set up nested zones
+        newBlock.querySelectorAll('.dropzone').forEach(setupDropzone);
+      } 
+      else {
+        newBlock = document.createElement('div');
+        newBlock.className = 'block';
+        newBlock.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+      }
 
-// On drop, clone the dragged element
-target.addEventListener('drop', e => {
-  e.preventDefault();
-  target.classList.remove('dropzone-highlight');
+      newBlock.draggable = true;
+      newBlock.dataset.type = type;
+      zone.appendChild(newBlock);
+    }
 
-  if (draggedEl) {
-    const clone = draggedEl.cloneNode(true); // <-- clone the element
-    clone.style.background = '#34a853';       // optional: different color for copies
-    clone.addEventListener('click', () => clone.remove()); // remove on click
-    target.appendChild(clone);
-  }
-});
-</script>
-
+    // set up initial drop zone
+    setupDropzone(document.getElementById('workspace'));
+  </script>
 </body>
 </html>

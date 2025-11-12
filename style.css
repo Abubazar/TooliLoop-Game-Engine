@@ -27,6 +27,22 @@ body{
     background-color: white;
 }
 
+.emptyRoundSpace{
+    padding: -2px;
+    min-width: 40px;
+    background-color: rgba(0, 0, 0, 0.318);
+    min-height: 20px;
+    border-radius: 300px;
+}
+.emptySquareSpace{
+    padding: 4px;
+    width: 35px;
+    background-color: rgba(0, 0, 0, 0.318);
+    border: solid 2px rgba(203, 203, 203, 0.275);
+    height: 15px;
+    border-radius: 5px;
+}
+
 #type-selection{
     display: flex;
     flex-direction: column;
