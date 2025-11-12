@@ -2,69 +2,59 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Drag and Drop Code</title>
+<title>Drag & Drop DOM Copy</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-  }
-  .blocks {
-    width: 200px;
-  }
-  .block {
-    padding: 10px;
-    margin-bottom: 10px;
-    background-color: #eee;
-    border: 1px solid #ccc;
-    cursor: grab;
-  }
-  textarea {
-    width: 400px;
-    height: 300px;
-    font-family: monospace;
-    font-size: 14px;
-  }
+  body { font-family: sans-serif; padding: 20px; }
+  .zone { padding: 10px; border: 2px dashed #aaa; width: 200px; min-height: 150px; border-radius: 8px; margin-bottom:20px;}
+  .item { padding: 8px 12px; margin: 6px 0; background: #4a90e2; color: white; border-radius: 6px; cursor: grab; }
+  .dropzone-highlight { background: #e0f7ff; border-color: #00bfff; }
 </style>
 </head>
 <body>
 
-<div class="blocks">
-  <div class="block" draggable="true" data-code="function hello() {\n    alert('Hello!');\n}">Hello Function</div>
-  <div class="block" draggable="true" data-code="console.log('Debug');">Console Log</div>
-  <div class="block" draggable="true" data-code="for(let i=0;i<10;i++) {\n    console.log(i);\n}">For Loop</div>
+<h2>Drag & Drop Copy Demo</h2>
+<div class="zone" id="source">
+  <div class="item" draggable="true">Item 1</div>
+  <div class="item" draggable="true">Item 2</div>
+  <div class="item" draggable="true">Item 3</div>
 </div>
 
-<textarea id="codeArea" placeholder="Drop code here..."></textarea>
+<div class="zone dropzone" id="target">
+  <p>Drop items here</p>
+</div>
 
 <script>
-const textarea = document.getElementById('codeArea');
-const blocks = document.querySelectorAll('.block');
+const sourceItems = document.querySelectorAll('#source .item');
+const target = document.getElementById('target');
 
-blocks.forEach(block => {
-    block.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', block.dataset.code);
-    });
+// For highlighting drop zone
+target.addEventListener('dragover', e => {
+  e.preventDefault();
+  target.classList.add('dropzone-highlight');
 });
 
-textarea.addEventListener('dragover', (e) => {
-    e.preventDefault(); // allow drop
+target.addEventListener('dragleave', () => target.classList.remove('dropzone-highlight'));
+
+// On dragstart, store a reference to the dragged element
+let draggedEl = null;
+sourceItems.forEach(item => {
+  item.addEventListener('dragstart', e => {
+    draggedEl = item; // store actual element
+    e.dataTransfer.setData('text/plain', ''); // required by some browsers
+  });
 });
 
-textarea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const code = e.dataTransfer.getData('text/plain');
+// On drop, clone the dragged element
+target.addEventListener('drop', e => {
+  e.preventDefault();
+  target.classList.remove('dropzone-highlight');
 
-    // Insert at cursor position
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-
-    textarea.value = text.slice(0, start) + code + text.slice(end);
-    textarea.selectionStart = textarea.selectionEnd = start + code.length;
-    textarea.focus();
+  if (draggedEl) {
+    const clone = draggedEl.cloneNode(true); // <-- clone the element
+    clone.style.background = '#34a853';       // optional: different color for copies
+    clone.addEventListener('click', () => clone.remove()); // remove on click
+    target.appendChild(clone);
+  }
 });
 </script>
 
