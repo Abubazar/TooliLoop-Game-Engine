@@ -35,10 +35,10 @@ function addBlocks(){
         const item = document.createElement('div')
         item.draggable=true
         item.classList.add('Block')
+        item.dataset.type = 'full'
         for(let w=0;w<codeBlocks[i].length;w++){
             if(codeBlocks[i][w][0]=='group'){
                 item.classList.add(codeBlocks[i][w][1])
-                console.log(22)
             }
             if(codeBlocks[i][w][0]=='text'){
                 const ele = document.createElement('a')
@@ -54,27 +54,13 @@ function addBlocks(){
                 const sack = document.createElement('div')
                 if (codeBlocks[i][w][1]=='calc'){
                     sack.className = 'emptyRoundSpace'
+                    sack.classList.add('slot')
                 }
                 else if (codeBlocks[i][w][1]=='void'){
                     sack.className = 'emptySquareSpace'
+                    sack.classList.add('slot')
                 }
                 item.appendChild(sack)
-                sack.addEventListener('dragover', (e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    e.target.closest()
-                    console.log(2227328327782)
-                })
-
-                sack.addEventListener('drop', (e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    e.target.closest()
-                    if(block){
-                        const blk = block.cloneNode(true)
-                        sack.appendChild(blk)
-                    }
-                })
             }
             else if(codeBlocks[i][w][0]=='code'){
                 item.dataset.code = codeBlocks[i][w][1]
@@ -91,18 +77,33 @@ function addBlocks(){
 codeView.addEventListener('drop', (e) => {
     e.preventDefault()
     e.stopPropagation()
-    e.target.closest()
     if(block){
-        const blk = block.cloneNode(true)
-        codeView.appendChild(blk)
-    }
+        const blork = block.cloneNode(true)
+        const blk = blork.querySelector('.slot')
+        codeView.appendChild(blork)
+        blk.addEventListener('dragover', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+        })
+
+        blk.addEventListener('drop', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if(block){
+                const newblk = block.cloneNode(true)
+                blk.appendChild(newblk)
+            }
+        })
+    }  
 })
 
 codeView.addEventListener('dragover', (e) => {
     e.preventDefault()
     e.stopPropagation()
-    e.target.closest()
 })
+
+codeView.addEventListener('dragleave', e => {
+        e.stopPropagation()})
 
 
 
